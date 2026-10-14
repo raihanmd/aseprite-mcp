@@ -1,0 +1,4 @@
+interface:
+  display_name: "Aseprite Pixel Art"
+  short_description: "Draw and revise editable pixel art in Aseprite"
+  default_prompt: "Use $aseprite-pixel-art to create an editable pixel-art asset and show me a preview for review."

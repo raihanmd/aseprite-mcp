@@ -1,0 +1,30 @@
+{
+  "name": "aseprite-mcp",
+  "license": "MIT",
+  "module": "src/mcp/server.ts",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "start": "bun scripts/launch.ts",
+    "setup": "bun scripts/setup.ts",
+    "install:harness": "bun scripts/install-harness.ts",
+    "update:skill": "bun scripts/update-skill.ts",
+    "pairing-token": "bun scripts/pairing-token.ts",
+    "package:extension": "bun scripts/package-extension.ts",
+    "check:editor": "node scripts/check-editor.mjs",
+    "check:batch": "node scripts/check-batch.mjs",
+    "check:advanced-api": "bun scripts/check-advanced-api.ts",
+    "test": "bun test tests/unit",
+    "test:integration": "bun test tests/integration",
+    "typecheck": "tsc --noEmit -p tsconfig.mcp.json",
+    "check:docs": "bun scripts/check-research.ts"
+  },
+  "devDependencies": {
+    "@types/bun": "1.3.14",
+    "typescript": "5.9.3"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "1.29.0",
+    "zod": "4.3.6"
+  }
+}

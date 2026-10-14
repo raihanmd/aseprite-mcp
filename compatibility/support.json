@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "minimumApiVersion": 25,
+  "reportedInstallations": [
+    { "version": "1.3.18.6-X64", "source": "user report", "reportedAt": "2026-10-08" }
+  ],
+  "verifiedEditorWorkflows": [],
+  "verifiedBatchWorkflows": [
+    {
+      "editorVersion": "1.3.18.6",
+      "apiVersion": 41,
+      "verifiedAt": "2026-10-08",
+      "command": "bun run check:batch",
+      "checks": ["create", "reopen-inspect", "targeted-revision", "protected-pixels", "preview-pixels", "original-unchanged", "stale-file-rejection", "exclusive-output"],
+      "productionClientsTested": false
+    }
+  ]
+}
