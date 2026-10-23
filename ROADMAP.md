@@ -12,7 +12,7 @@ This is a direction, not a compatibility promise. The [verification map](skills/
 
 - Extend animation, palette, selection, transform, and sprite-sheet tools beyond their current operations.
 - Expand saved-file batch processing while keeping the live-versus-file boundary explicit.
-- Better cross-document assembly and layer organization for complex scenes, without silently flattening sources.
+- Selective component updates and broader layer types beyond the current whole-sprite, ordinary-image-layer import. Preserve source and target safety without flattening.
 - Repeatable art and playback benchmarks, including both Codex and OpenCode runs.
 
 ## Before a public release

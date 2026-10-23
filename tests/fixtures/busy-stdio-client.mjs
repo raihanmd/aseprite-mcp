@@ -11,7 +11,7 @@ transport.stderr.on('data',()=>{});
 const client=new Client({name:'busy-production-startup-test',version:'1'});
 try{
   await client.connect(transport);
-  const {tools}=await client.listTools();assert.equal(tools.length,31);
+  const {tools}=await client.listTools();assert.equal(tools.length,35);
   for(const name of ['get_editor_status','list_documents']){
     const result=await client.callTool({name,arguments:{}});
     assert.equal(result.isError,true);assert.equal(result.structuredContent.error.code,'LIVE_PORT_IN_USE');

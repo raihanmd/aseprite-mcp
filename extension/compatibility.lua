@@ -1,6 +1,6 @@
 -- Feature checks deliberately do not pin one exact Aseprite release.
 -- They do not open sockets, create sprites, or prove editor behavior/permissions.
-local M={minimumApiVersion=25,extensionVersion='0.1.5'}
+local M={minimumApiVersion=25,extensionVersion='0.1.7'}
 local function callable(value)
   if type(value)=='function' then return true end
   local meta=getmetatable(value)

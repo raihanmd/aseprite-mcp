@@ -70,6 +70,7 @@ local art = dofile('extension/art_operations.lua'){
   check_canvas=function(s) eq(s.colorMode,ColorMode.RGB) end,
   editable=function(l) if not l.isEditable then error({code='LAYER_LOCKED'}) end end,
   fail=function(code, message) error({code=code,message=message},0) end,
+  transaction_for=function(_,label,operation) app.transaction(label,operation) end,
 }
 
 eq(#art.capabilities(),5)

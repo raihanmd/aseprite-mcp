@@ -57,7 +57,10 @@ local function run()
     for i,layer in ipairs(info.layers) do local other=reopened.layers[i];if other.name~=layer.name or other.group~=layer.group or other.visible~=layer.visible or other.opacity~=layer.opacity then fail('ROUNDTRIP_FAILED','Saved layer state differs') end end
     for i,frame in ipairs(info.frames) do if reopened.frames[i].durationMs~=frame.durationMs then fail('ROUNDTRIP_FAILED','Saved frame timing differs') end end
   end
-  for index,layer in ipairs(info.layers) do layer.layerIndex=index;layer.layerId=nil end
+  for index,layer in ipairs(info.layers) do
+    layer.layerIndex=index;layer.layerId=nil
+    layer.parentLayerId=nil;layer.stackIndex=nil;layer.blendMode=nil;layer.background=nil
+  end
   -- Handles/temporary paths are process-local, not future live-editor targets.
   -- Keep this file-job reply on its published contract. Rich live-only cel
   -- handles/tags are not yet part of batch inspection or parity guarantees.

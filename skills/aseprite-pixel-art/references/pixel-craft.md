@@ -6,6 +6,8 @@ This is a compact, authored synthesis, not a copied tutorial. The recommendation
 
 A pixel cluster is a connected patch of the same color. Plan important patches together: changing a shadow's border also changes the adjacent lit shape. Check that the subject is recognizable before fine texture. Curves should have intentional step lengths; fix a misplaced step without making every organic contour mechanically uniform. A lone pixel can be a useful eye or glint, not automatically a defect. [Saint11: cluster sketching](https://saint11.art/pixel_art_articles/article2/).
 
+Primitive drawing calls are useful for blocking masses, but low tool-call count is not an artistic goal. When ellipses, polygons, or rectangles leave an identity-bearing head, joint, paw, tail root, opening, or contour generic, revise those boundaries with intentional pixel clusters. Do not ban primitives universally; audit the places where their default geometry decides the design.
+
 ## Light describes a form
 
 Choose the light direction and think of the object's simple volumes. A form shadow is the object's own side turning away from light; a cast shadow is one object blocking light on another. Place highlights according to material, not uniformly on every edge. Glossy surfaces can use tight highlights; matte surfaces may need none. Very small artwork cannot carry every lighting effect. [Saint11: shading](https://saint11.art/pixel_art_articles/article4/).

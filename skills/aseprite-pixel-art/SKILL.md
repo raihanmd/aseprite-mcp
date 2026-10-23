@@ -2,7 +2,7 @@
 name: aseprite-pixel-art
 description: Create, critique, and revise editable pixel-art icons, characters, scenes, and animations in Aseprite. Use for asset-making requests, not MCP server development.
 metadata:
-  harness_revision: "2026-10-14.3"
+  harness_revision: "2026-10-23.2"
 ---
 
 # Aseprite pixel art
@@ -25,6 +25,8 @@ After clarification, state a compact working brief: subject/action, visual direc
 
 Separate requirements from preferences: “exactly four colors” is a constraint; “cozy” needs visual interpretation. Treat detail density, lighting/rendering, shape language, and outlines as separate choices. Minimal art can be polished; dense detail can be unreadable. No outline, selective colored edges, and full outlines are all valid. For an existing asset, inspect and preserve its established treatment unless the user asks to change it.
 
+Treat production effort, detail density, rendering richness, and pixel dimensions as independent axes. “High effort” does not by itself authorize more shades, texture, highlights, or a larger canvas. At a small delivery footprint, spend the additional effort first on observation, construction, contour rhythm, cluster junctions, and focused correction. Add richer rendering only when its clusters describe a specific form, material, overlap, or focal cue and improve the native-size result over the simpler accepted state. Read the small-footprint guidance in [art-direction.md](references/art-direction.md).
+
 Use the user's agreed shorthand in pixel-art requests: “high poly” means higher detail density, richer shading and material cues; “low poly” means lower detail density, broader color clusters and simpler shading. Briefly state this translation when the label sets the direction. Neither label selects outlines, forces a larger canvas, or dictates rectangular anatomy; simpler art still needs careful construction and review. Read the mappings in [art-direction.md](references/art-direction.md).
 
 Explicit 3D context takes priority over this shorthand: “rendered 3D”, mesh, polygons, or a 3D asset request retains its literal meaning. Aseprite pixel drawing is not a 3D renderer; explain the production gap and resolve the route before substituting 2D. Explicit angular/faceted pixel art should describe meaningful planes without requiring a square body, absent expression, or inconsistent perspective.
@@ -34,8 +36,10 @@ Explicit 3D context takes priority over this shorthand: “rendered 3D”, mesh,
 Read the relevant local guidance before making drawing decisions. These authored references contain practical explanations; their external links are attribution and further reading, not required downloads:
 
 - [pixel-craft.md](references/pixel-craft.md): silhouettes, shading, palettes, contours, and texture.
+- [subject-study.md](references/subject-study.md): visual-reference and form study for a recognizable creature, person, object, or mechanism before complex drawing.
 - [visual-review.md](references/visual-review.md): visual checkpoints and worked corrections for objects, characters, environments, and effects.
 - [characters-and-poses.md](references/characters-and-poses.md): people, faces, proportions, working poses, and hand/prop contact.
+- [focal-subject-design.md](references/focal-subject-design.md): delivery-footprint exploration and separate acceptance gates for an important character or creature.
 - [animation.md](references/animation.md): component-first scene production, key poses, timing, continuity, and moving-output review.
 - [scenes-and-materials.md](references/scenes-and-materials.md): backgrounds, composition, perspective, faceted shapes, and material separation.
 - [revisions.md](references/revisions.md): changes to existing artwork, especially after a user edit or when parts must remain unchanged.
@@ -43,15 +47,25 @@ Read the relevant local guidance before making drawing decisions. These authored
 
 Read only the references relevant to the request. A simple icon does not need character or animation guidance.
 
+Before the first drawing call for a new complex scene's focal subjects or a distinctive unfamiliar object, read [subject-study.md](references/subject-study.md). Study the user's references first; otherwise find and actually inspect suitable visual references when tools permit. Distill the subject's identifying silhouette, proportions, joints or part connections, target-view landmarks, and relevant material or motion into a compact reference card. Separate observed features from stylization and uncertain guesses. A search-result caption or text description is not proof that an image was viewed. Keep the card with a multi-asset project's brief and pass it to delegated artists, or require them to create it before drawing. For a familiar small icon or an already specified visual reference, keep this step lightweight; do not turn every request into a research project.
+
 Work from large readable shapes toward shading and details. Inspect a native-size preview for readability and an integer-enlarged preview with nearest-neighbor scaling for pixel placement. Nearest-neighbor scaling enlarges each pixel without blending it with its neighbors. Both views matter; enlarged polish can hide poor native-size readability.
 
 Call the MCP directly for ordinary drafts and revisions. When available, `draw_shapes` can compactly paint new transparent areas; use `draw_pixels` for inspected revisions over existing paint or for contours that simple shapes cannot express. Do not make anatomy or foliage boxy merely because rectangles are convenient. Neither tool chooses an appealing design for you. Do not generate request-file scripts by default: use one only when the available tools cannot express a needed pattern efficiently or reproducible procedural output is itself part of the request, and still inspect the rendered draft.
 
 Use the lighting, material, and palette decisions to explain visible choices briefly. Do not turn the art guidance into an automatic ban on single pixels, dithering, black outlines, monochrome palettes, or deliberate flat shading.
 
+For a complex focal character or creature, also read [focal-subject-design.md](references/focal-subject-design.md). Record the exact pixel footprint the subject occupies in the delivered scene, not only the document size, and choose a visible style target separately from anatomical reference. Explore several materially different silhouettes when the design is unfamiliar or uncertain; do not commit to the first recognizable construction. Recognition is only the identity gate. It does not prove sound construction, deliberate pixel craft, appealing style, or readable acting.
+
+For an unfamiliar focal subject in an invented or strongly stylized action, establish the same design first in a neutral or canonical pose supported by a pose-matched observed reference, a user model sheet, or an explicitly invented construction informed by constituent references. Label invented evidence. Then translate that approved construction into the requested action. Use a flat silhouette to judge broad structural class, balance, and appendage rhythm; use a minimal identity block-in with only the values or colors needed for defining internal landmarks—often two or three—for a caption-free semantic read at the specificity required by the brief. Do not require every exact species or character identity to survive a flat silhouette alone.
+
+When the user asks for "low effort", treat it as an economy-finish production budget unless they explicitly request an intentionally rough or unfinished aesthetic: retain full observation, construction, and review, but limit rendering passes, palette complexity, texture, and ornament. Read the mapping in [art-direction.md](references/art-direction.md).
+
 ## Draw, inspect, and expand
 
 Read [visual-review.md](references/visual-review.md) for new artwork or a visual redesign. Build and inspect a representative draft before multiplying assets, detail, variants, or frames. Choose the proof appropriate to the request: an object, whole character, environment crop, effect key shapes, or one assembled scene frame. A script may construct artwork, but its success is not a substitute for seeing that draft. Correct a weak silhouette, unintended stiff construction, or unclear action before increasing shading or frame count. Respect deliberately geometric or rigid styles.
+
+For a character or object that must be recognizable, inspect its isolated, mostly unadorned form at the delivery size before costume, texture, scenery, or animation can hide construction errors. Ask whether its silhouette and part relationships match the form study without relying on a caption. For an interacting prop, establish its attachment, pivot, origin, and path in the relevant key poses. If these fail, change the underlying drawing or staging before adding detail. A named layer, reference link, or written anatomy note alone is not a passed visual check.
 
 For a new complex scene or character animation, show an early preview and ask for feedback on the look before expanding it, unless the user explicitly requests automatic completion or has already approved that design. The preview should show the focal subject in context with enough shape, color, and shading to judge the proposed look, rather than construction boxes alone; for character action, include the relevant prop and a readable action pose. Wait for the response at this checkpoint. For a simple asset, inspect and refine internally, then return the draft for review. Honor any additional review stages the user requested.
 
@@ -59,7 +73,11 @@ For an animation meant to communicate a specific action or story, also inspect a
 
 For a complex scene with independently moving subjects, work asset-first: plan the parts and their interactions, create and review each important subject or prop as an editable component, animate its decisive poses, then assemble the finished pieces with the background and effects in an editable master scene. Use a rough assembled blocking preview early to check scale, contact, depth, and story; “assemble last” does not mean discovering composition problems only after polishing every part. Keep meaningful scene and component layers separate so a human can revise them. Read the component workflow in [animation.md](references/animation.md). A simple icon or intentionally flat animation does not need multiple source files.
 
+When the connected extension supports component assembly, copy approved open components into the master with `import_component` and inspect the resulting hierarchy. Keep source documents as independent editables and do not mistake an import for a live link. Use `compare_frames` and `render_onion_skin` for motion diagnostics, then still judge the assembled playback at delivery size.
+
 With automatic completion, perform the same visual checks internally. Name an observed mismatch and make a targeted correction. Usually one or two focused correction passes are enough before seeking feedback; if the remaining issue needs a new design choice or exceeds the request, show it and ask. Do not invent a defect to fill a checklist or run an unbounded polishing loop.
+
+For a focal subject's failed identity gate, follow the narrower correction and bounded-restart rule in [focal-subject-design.md](references/focal-subject-design.md) rather than the general one-or-two-pass guidance. Rough assembled staging may test scale and action before approval, but detailed production and frame multiplication wait for the required subject gates.
 
 ## Use actual editor capabilities
 

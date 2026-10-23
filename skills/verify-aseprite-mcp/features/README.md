@@ -28,8 +28,8 @@ This map is the maintained source for repeatable, user-visible checks. Read it b
 
 ## Features
 
-- [Live creation and revision](./live-creation-revision.md): pairing, drawing, stale protection, manual edits, undo/redo.
-- [Animation control](./animation.md): independent pose copying, cel movement, duration, tags, preview.
+- [Live creation and revision](./live-creation-revision.md): pairing, drawing, stale protection, manual edits, editable group assembly, undo/redo.
+- [Animation control](./animation.md): independent pose copying, cel movement, duration, tags, preview, frame diagnostics, mapped component timing.
 - [Palette, selection, transforms](./art-controls.md): constrained colors, exact selection and pixel preservation, lossless geometry.
 - [Export and web playback](./export-web.md): editable source, PNG, atlas+JSON, actual browser playback.
 - [Saved-file batch](./saved-file-batch.md): explicit file-only create, inspect, revise, no overwrite or live fallback.

@@ -9,6 +9,7 @@ A user can ask the AI to create an editable sprite in the open Aseprite instance
 - `live-revise`: expected pixels, mask, and allowed colors protect unrelated artwork.
 - `live-reject`: stale pixels, locks, invalid coordinates, linked cels, and missing documents refuse mutation.
 - `live-history`: targeted revision is one undoable change; redo restores it.
+- `live-assembly`: separate open RGB sources become independent, editable cels inside a new named group in a different scratch master; source pixels and metadata stay unchanged.
 
 ## How to get to it (user POV)
 
@@ -20,7 +21,7 @@ A user can ask the AI to create an editable sprite in the open Aseprite instance
 
 Preconditions:
 
-- MCP `get_editor_status` reports connected and compatible; record the extension and API versions.
+- MCP `get_editor_status` reports connected and compatible; record the extension and API versions. For assembly require `create_group` and `import_component` in `capabilities`.
 - Record the existing document IDs and do not use them as mutation targets.
 
 - **Create and inspect.** Run `bun run check:editor`; require the returned source and PNG paths plus `create`, `draw`, `protected-pixels`, `preview-pixels`, `undo`, and `redo` checks. Open the scratch tab and inspect the actual result.
@@ -29,7 +30,10 @@ Preconditions:
 - **Manual change.** Ask the user to change the scratch sprite in Aseprite, then call `get_document_info` and `read_pixels` again before revising. Never use cached expected bytes. If no human edit occurs, record this case as pending rather than simulating one.
 - **Two clients.** In fresh Codex and OpenCode sessions connected to the same editor, inspect status from both, make one scratch-sprite edit from each in sequence, and verify the second sees the first's pixels. If concurrent use is required, issue overlapping scratch requests and require serialized results without duplicate edits or session loss. Record each client's observed tool list and results; one client alone does not prove sharing.
 - **History.** Call `undo` then `redo` on the scratch document and compare exact pixels after each; never undo the user's unrelated tab.
+- **Inactive-tab history.** With another scratch tab active, edit the first scratch document by its ID. Require that the original active tab remains active, one `undo` on the edited document removes the whole edit, and one `redo` restores it. This guards against transactions entering the wrong tab's undo stack.
+- **Editable assembly.** Create two fresh scratch sprites: a source with a nested group and at least two image layers, and a target with a named host group. Capture source metadata and rendered pixels first. Call `import_component` with an explicit frame map and offset. Require a new group under the host, nested child `parentLayerId` values, independent unlinked cels, exact copied pixels and positions, unchanged source reads, and unchanged target timing/tags. Test a same-document import, sibling name collision, unsupported source layer, and off-canvas placement; each must fail without a new target layer or cel. Undo and redo only this target import and compare layer hierarchy and pixels. For a saved deliverable, reopen the `.aseprite` source copy to confirm groups survive.
 - **Regression.** Run `bun test tests/unit/bridge.test.ts tests/unit/lua.test.ts tests/unit/shapes.test.ts tests/unit/availability.test.ts` and record any failures separately from live evidence.
+- **Regression for assembly.** Run `bun run check:advanced-api` (real Aseprite CLI scratch process) and `bun test tests/unit/contracts.test.ts tests/unit/tool-results.test.ts tests/unit/mcp.test.ts`. This is not a paired desktop test.
 
 ## Gotchas
 

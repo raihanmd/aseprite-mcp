@@ -31,6 +31,26 @@ Assess against the agreed direction:
 
 Apply relevant criteria only. Flat graphic icons need no glossy material rendering. Environment-only scenes need no actor. Deliberately stiff robots and geometric designs need no organic pose correction. Dimensions and file checks support delivery but do not establish visual appeal.
 
+## Keep acceptance gates separate
+
+For a refined small-footprint variant, also ask whether each added light, shadow, texture, or edge cluster explains form, material, overlap, or focus at native size. Compare it with the simpler accepted checkpoint without changing accepted construction. More colors and internal edges are production facts, not evidence that the refined result is stronger.
+
+Long contour-parallel bands, isolated highlights with no plane relationship, and shadows that merge unrelated limbs are reasons to regroup or remove rendering. A high-effort result can legitimately contain fewer, better clusters than an earlier draft.
+
+For focal character or creature, use its actual occupied delivery footprint rather than shrinking large proof by intuition. Record each applicable result separately:
+
+- **Structural silhouette:** Does the flat shape communicate orientation, broad body class, balance, support, and appendage rhythm without an accidental lookalike dominating?
+- **Semantic identity:** After a minimal block-in adds only the values or colors needed for defining internal landmarks—often two or three—can the intended subject and facing direction be identified at the specificity required by the brief, without caption or costume explanation?
+- **Construction and contact:** Do major masses connect coherently, with readable support, balance, near/far parts, joints, grip, expression, gesture, and perspective?
+- **Pixel craft and style:** Do contour steps, clusters, value grouping, edges, detail density, palette, and shape language look deliberate and agree with chosen style target?
+- **Action and story:** Do decisive pose, timing, contact, continuity, and loop or ending communicate intended event?
+
+Passing identity does not pass construction or craft. Clean clusters do not prove identity. Frame continuity does not prove action makes sense. Record whether evidence came from an uninformed viewer, an informed reviewer, or provisional author self-review, and mark each gate pass, fail, or unassessed. After failed blind identity read, the one-correction-then-restart rule in [focal-subject-design.md](focal-subject-design.md) takes precedence over general correction guidance.
+
+For an unfamiliar focal subject, split identity review into two stages. First inspect the flat silhouette for structural class, orientation, balance, support, and appendage rhythm. Then add only the values or colors needed for defining internal landmarks—often two or three—before requesting a caption-free identity read at the semantic specificity required by the brief. A silhouette may pass structure without yielding an exact species name; a colored block-in may pass identity while still failing craft.
+
+When an action lacks a pose-matched reference, compare a neutral identity anchor with the action pose. If the construction changes identity between them, revise the translation before reviewing story or polish.
+
 ## Worked corrections
 
 ### Object: a curved metal lantern reads as a flat badge

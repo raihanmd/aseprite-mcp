@@ -10,10 +10,10 @@ if(!executable||!isAbsolute(executable)) {
   process.exit(1);
 }
 const folder=await mkdtemp(join(tmpdir(),'aseprite-advanced-api-'));
-const scripts=['tests/integration/animation-real.lua','tests/fixtures/art_aseprite_smoke.lua'];
+const scripts=['tests/integration/animation-real.lua','tests/integration/components-real.lua','tests/fixtures/art_aseprite_smoke.lua'];
 try {
   for(const script of scripts) {
-    const child=Bun.spawn([executable,'--batch','--noinapp','--script',resolve(root,script)],{
+    const child=Bun.spawn([executable,'--batch','--noinapp','--script-param',`outputPath=${join(folder,'component-roundtrip.aseprite')}`,'--script',resolve(root,script)],{
       cwd:root,
       env:{...process.env,ASEPRITE_USER_FOLDER:folder},
       stdin:'ignore',stdout:'pipe',stderr:'pipe',

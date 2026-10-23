@@ -13,6 +13,11 @@ local art = dofile('extension/art_operations.lua'){
   check_canvas=function(s) assert(s.colorMode == ColorMode.RGB) end,
   editable=function(l) assert(l.isEditable) end,
   fail=function(code, message) error(code..': '..message, 0) end,
+  transaction_for=function(target,label,operation)
+    assert(target==sprite)
+    app.sprite=target
+    app.transaction(label,operation)
+  end,
 }
 local palette = art.get_palette{documentId='smoke'}
 assert(palette.size > 0)

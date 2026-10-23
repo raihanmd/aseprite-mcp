@@ -141,7 +141,7 @@ test('SDK discovers all tools when the live port is occupied; live reads, edits 
   const [clientTransport,serverTransport]=InMemoryTransport.createLinkedPair();
   try{
     await server.connect(serverTransport);await client.connect(clientTransport);
-    const tools=await client.listTools();expect(tools.tools).toHaveLength(31);
+    const tools=await client.listTools();expect(tools.tools).toHaveLength(35);
     for(const [name,args] of [
       ['get_editor_status',{}],['list_documents',{}],
       ['create_sprite',{width:2,height:2}],
@@ -183,7 +183,7 @@ test('SDK recovers without restarting MCP and the acquired bridge still authenti
   };
   try{
     await server.connect(serverTransport);await client.connect(clientTransport);
-    expect((await client.listTools()).tools).toHaveLength(31);expect(attempts).toBe(1);
+    expect((await client.listTools()).tools).toHaveLength(35);expect(attempts).toBe(1);
     const busyStatus=await client.callTool({name:'get_editor_status',arguments:{}});
     expect(busyStatus.structuredContent).toMatchObject({ok:false,error:{code:'LIVE_PORT_IN_USE'}});
     occupied=false;
@@ -199,7 +199,7 @@ test('SDK recovers without restarting MCP and the acquired bridge still authenti
     const documents=await client.callTool({name:'list_documents',arguments:{}});
     expect(documents.structuredContent).toMatchObject({ok:true,result:{documents:[]}});
     expect(requests).toHaveLength(1);expect(requests[0].method).toBe('list_documents');
-    expect((await client.listTools()).tools).toHaveLength(31);expect(attempts).toBe(3);
+    expect((await client.listTools()).tools).toHaveLength(35);expect(attempts).toBe(3);
     expect((await readdir(root)).filter(name=>name.endsWith('.aseprite')||name.endsWith('.png'))).toEqual([]);
     result.bridge.close();result.bridge.close();expect(stops).toBe(1);
     const closedStatus=await client.callTool({name:'get_editor_status',arguments:{}});

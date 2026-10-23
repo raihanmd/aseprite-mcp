@@ -14,7 +14,7 @@ The skill asks short questions when a creation brief leaves important visual cho
 
 The agent should read the current document and relevant pixels before changing them. A fresh preview, the target document identity, and unchanged regions matter more than a success message from a drawing call. `undo` and `redo` remain available for reversible edits. Saving or exporting is a separate requested action, not an automatic side effect of a preview.
 
-For a complex scene, the skill calls for a rough composition proof, editable component sources, readable key poses, then an assembled editable master. The current MCP does not expose every assembly operation, such as cross-document import or layer-group creation. The agent must explain such a gap before promising a fully editable composite; it should not silently flatten the artwork or substitute file mode for an unsaved live document.
+For a complex scene, the skill calls for a rough composition proof, editable component sources, readable key poses, then an assembled editable master. `create_group` makes scene sections; `import_component` copies a different open RGB sprite's ordinary image layers, nested groups, and mapped cels into a new named group. The source stays open and untouched, but the copy is not linked to future source edits. Target frame durations and tags are never rewritten by import. A multi-frame component must match target timing unless you explicitly choose `timingPolicy: "keep_target"`. Inspect the resulting layer hierarchy and pixels before calling the assembly complete. Reference, tilemap, and background source layers are rejected rather than flattened. Pixel bytes are copied without converting color profiles; inspect the rendered master when the source and target use different profiles.
 
 ## Saved-file batch
 
@@ -23,5 +23,7 @@ Use a `batch_*` tool only when the request explicitly targets a saved file or as
 ## Animation and web output
 
 Plan the visible action before adding frames. Review representative still poses and a short caption-free sequence at delivery size, then inspect the actual playback speed and loop boundary. Sprite-sheet export produces image and timing data; a web player must load both and be checked through a complete cycle. A contact sheet or passing manifest test is not evidence that the animation plays or reads well to a human.
+
+`compare_frames` returns a read-only change mask, count, and bounds for two rendered frames; `render_onion_skin` overlays previous-only pixels in pink behind the current frame. These help find motion mistakes but do not rate artistic quality.
 
 For repeatable user-path checks, follow the [verification map](../skills/verify-aseprite-mcp/features/README.md). It separates live editor, animation, art controls, export/playback, and batch behavior. The user's artistic review remains the acceptance test for visual quality.

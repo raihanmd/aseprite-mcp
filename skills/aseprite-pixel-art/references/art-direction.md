@@ -46,6 +46,25 @@ Both high and low treatments need deliberate design and review. Low density does
 
 An explicit 3D request, mesh workflow, or polygon constraint overrides this pixel-art shorthand. For "rendered low-poly 3D character", keep the actual 3D meaning and explain that Aseprite cannot render that model by itself. Respect a user's explicit definition or reference when it differs from the convention.
 
+## Treat low effort as an economy finish
+
+When a user explicitly asks for "low effort", clarify whether they mean a quick production budget or an intentionally rough aesthetic. If context already establishes a quick benchmark, use an **economy finish**: keep the same reference study, construction, identity, and review gates, while limiting palette complexity, rendering passes, texture, ornament, and polish time. Low effort must not silently mean less observation, weaker anatomy, generic primitives, or skipped inspection.
+
+Compare economy and standard finish only after they share an approved underlying design. Record actual palette, rendering passes, and production facts, then judge each against its intended finish. Fewer colors or calls do not prove the economy version is better.
+
+## Spend effort without adding noise
+
+Effort, resolution, detail density, and rendering richness are separate. A high-effort small sprite may remain sparse: the extra work can improve reference use, proportions, contour steps, negative space, cluster connections, and correction quality without adding another shade. Likewise, a larger canvas does not require dense rendering.
+
+When refining an accepted design at a small delivery footprint:
+
+1. Preserve a simpler accepted checkpoint so construction and identity are not silently changed by polish.
+2. Give every new light, shadow, texture, or edge cluster a visible job: describe a plane turn, separate an overlap, identify a material, or focus attention.
+3. Inspect the result at native size on its intended background. Use an integer enlargement only to diagnose cluster placement.
+4. Compare the refined result with the simpler checkpoint. If added rendering creates contour-parallel bands, detached highlight islands, ambiguous joints, or a weaker native-size read, remove or regroup those clusters rather than adding more colors.
+
+Do not impose a universal palette cap or pixel-size threshold. The available footprint, subject topology, background contrast, and intended style determine how much rendering survives. In a deliberate finish comparison, hold the accepted silhouette, identity landmarks, footprint, and intended background constant; change one finish variable at a time. Record what changed, and let native-size human review decide whether the richer pass is actually better.
+
 ## Make the agreement concrete
 
 After the answers, state a short working brief. For example:

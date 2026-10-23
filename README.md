@@ -33,7 +33,7 @@ Screenshots and a short installation/demo video are TBA until a repeatable deskt
 
 ## What is included
 
-- [Live tools](docs/usage.md#live-editor): create sprites and layers, draw and revise pixels or shapes, inspect previews, work with animation, palettes and selections, and save or export on request.
+- [Live tools](docs/usage.md#live-editor): create sprites, layers, and groups; import editable components from another open sprite; draw and revise pixels; inspect frames and motion; and save or export on request.
 - [Saved-file tools](docs/usage.md#saved-file-batch): run separate Aseprite CLI jobs on named files. They cannot see unsaved editor changes and do not silently replace a live workflow.
 - [Pixel-art skill](skills/aseprite-pixel-art/SKILL.md): the maintained, bundled art instructions installed for both supported clients. A [skill-only updater](docs/install.md#updating-the-art-skill) handles later revisions.
 - [Verification skill](skills/verify-aseprite-mcp/SKILL.md): project-local tests for live editing, animation, art controls, export, and batch work.
@@ -49,5 +49,6 @@ The server connects only on localhost and requires a private pairing token. Loca
 - [Aseprite update checks](docs/compatibility.md)
 - [Development and verification](docs/development.md)
 - [Roadmap](ROADMAP.md) and [documentation index](docs/README.md)
+- [Comparison with another Aseprite MCP](docs/research/diivi-comparison.md)
 
 Contributions are described in [CONTRIBUTING.md](CONTRIBUTING.md). This repository's code is [MIT licensed](LICENSE); the offline Aseprite API documentation snapshot retains its [separate upstream notice](docs/sources/README.md).

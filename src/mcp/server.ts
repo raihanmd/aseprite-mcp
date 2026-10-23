@@ -17,6 +17,7 @@ import {batchSchemas,type BatchMethod} from '../batch/contracts.ts';
 import {BatchRunner,type BatchClient} from '../batch/runner.ts';
 
 const preview=z.object({documentId:z.string(),frame:z.number().int(),width:z.number().int(),height:z.number().int(),rgbaHex:z.string()});
+const frameDiagnostic=z.object({width:z.number().int().min(1).max(256),height:z.number().int().min(1).max(256),previousFrame:z.number().int(),currentFrame:z.number().int(),previousDurationMs:z.number().int(),currentDurationMs:z.number().int(),rgbaHex:z.string(),changedPixels:z.number().int().optional(),changedBounds:z.object({x:z.number().int(),y:z.number().int(),width:z.number().int(),height:z.number().int()}).optional()});
 const output=z.object({ok:z.boolean(),sessionId:z.string().nullable().optional(),result:z.unknown().optional(),error:z.object({code:z.string(),message:z.string()}).optional()});
 const descriptions:Record<string,string>={
   get_editor_status:'Inspect the local editor connection; does not edit anything.',
@@ -24,10 +25,14 @@ const descriptions:Record<string,string>={
   get_document_info:'Inspect current layers, cels (positions and linked status), frame durations, dimensions and modified state. Re-read after user edits.',
   create_sprite:'Create and display an RGB sprite, 1–256 pixels per dimension, for editable pixel art.',
   create_layer:'Create an ordinary editable image layer in a specific document.',
+  create_group:'Create an editable layer group in the live document, optionally nested under an existing unlocked group. Reject a sibling name collision.',
+  import_component:'Copy ordinary image layers, nested groups, and mapped cels from a different open RGB sprite into a new named group in the target document. The source remains untouched; copied cels are independent. Frame mapping and placement are explicit; target timing and tags are not changed. Animated timing must match unless timingPolicy=keep_target is explicitly chosen.',
   read_pixels:'Read exact layer RGBA pixels in canvas coordinates (0-based); frames start at 1. At most 16384 pixels.',
   draw_pixels:'Apply one undoable bounded pixel patch. Existing cels require expected RGBA for every edited pixel. Reject stale pixels, locks, linked cels, duplicate coordinates, mask escapes and disallowed colors. Other pixels are preserved.',
   draw_shapes:'Draw filled rectangles, pixel lines, filled ellipses, and filled polygons as one undoable edit on transparent target pixels. Shapes are rasterized by this MCP; the editor still verifies every pixel is clear. For revision over painted pixels, inspect and use draw_pixels.',
   get_preview:'Render the current unsaved frame as a PNG. Scale 1 is native size; scale 2–8 enlarges without smoothing.',
+  compare_frames:'Read-only difference image for two live frames. Cyan means newly occupied, pink means removed, yellow means changed color/alpha. Returns changed-pixel count and bounds; not an artistic quality score.',
+  render_onion_skin:'Read-only two-frame overlay: current pixels retain their color, and previous-only pixels appear as translucent pink ghosts. It does not change editor onion-skin settings.',
   get_animation_preview:'Render up to 16 consecutive, fully composited animation frames as a nearest-neighbor contact sheet, with frame timing and tags. Read-only; inspect this before accepting or revising a cycle.',
   undo:'Undo the latest change on the specified document, including manual changes. Inspect first; never use as an automatic rollback after later user edits.',
   redo:'Redo the latest undone change on the specified document.',
@@ -121,6 +126,13 @@ export function createMcp(bridge:EditorClient,files:ProjectFiles,batch:BatchClie
         const image=preview.parse(value), scale=Number(params.scale);
         const bytes=encodePng(image.width,image.height,image.rgbaHex,scale);
         const result={ok:true,sessionId,result:{documentId:image.documentId,frame:image.frame,width:image.width*scale,height:image.height*scale,scale}};
+        return {...reply(result),content:[{type:'image',mimeType:'image/png',data:bytes.toString('base64')},{type:'text',text:JSON.stringify(result)}]};
+      }
+      if(name==='compare_frames'||name==='render_onion_skin') {
+        const image=frameDiagnostic.parse(value),scale=Number(params.scale);
+        if(image.previousFrame!==params.previousFrame||image.currentFrame!==params.currentFrame) throw new OperationError('INVALID_PREVIEW','Editor returned a different frame pair.');
+        const bytes=encodePng(image.width,image.height,image.rgbaHex,scale);
+        const result={ok:true,sessionId,result:{documentId:params.documentId,previousFrame:image.previousFrame,currentFrame:image.currentFrame,previousDurationMs:image.previousDurationMs,currentDurationMs:image.currentDurationMs,width:image.width*scale,height:image.height*scale,scale,...(name==='compare_frames'?{changedPixels:image.changedPixels,changedBounds:image.changedBounds??null}:{}),readOnly:true}};
         return {...reply(result),content:[{type:'image',mimeType:'image/png',data:bytes.toString('base64')},{type:'text',text:JSON.stringify(result)}]};
       }
       return reply({ok:true,sessionId,result:value});

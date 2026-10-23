@@ -23,13 +23,13 @@ local function get_sprite(id)
   for _, sprite in ipairs(app.sprites) do if sprite == target then return target end end
   fail('DOCUMENT_CLOSED', 'List documents again; this document is no longer open.')
 end
-local function walk(sprite, layers, result)
+local function walk(sprite, layers, result, parent_id)
   for _, layer in ipairs(layers) do
     local id
     for handle, known in pairs(layer_handles) do if known == layer then id=handle;break end end
     if not id then id=sprite_handle(sprite)..'-layer-'..tostring(M.next_layer);M.next_layer=M.next_layer+1;layer_handles[id]=layer end
-    result[#result+1]={layerId=id,name=layer.name,group=layer.isGroup,visible=layer.isVisible,editable=layer.isEditable,opacity=layer.opacity}
-    if layer.isGroup then walk(sprite,layer.layers,result) end
+    result[#result+1]={layerId=id,parentLayerId=parent_id,stackIndex=layer.stackIndex,name=layer.name,group=layer.isGroup,visible=layer.isVisible,editable=layer.isEditable,opacity=layer.opacity,blendMode=layer.blendMode,background=layer.isBackground}
+    if layer.isGroup then walk(sprite,layer.layers,result,id) end
   end
 end
 M.next_layer = 1
@@ -80,6 +80,9 @@ local function with_active(sprite, operation)
   if not ok then error(result,0) end
   return result
 end
+local function transaction_for(sprite, label, operation)
+  return with_active(sprite,function() return app.transaction(label,operation) end)
+end
 function M.list_documents()
   local list=array()
   for _,sprite in ipairs(app.sprites) do list[#list+1]={documentId=sprite_handle(sprite),width=sprite.width,height=sprite.height,filename=sprite.filename,isModified=sprite.isModified} end
@@ -110,16 +113,142 @@ function M.create_sprite(params)
   integer(params.width,1,256,'width');integer(params.height,1,256,'height');short_string(params.name,'name')
   local sprite=Sprite(params.width,params.height,ColorMode.RGB)
   app.sprite=sprite
-  app.transaction('Create AI asset',function() sprite.layers[1].name=params.name end)
+  transaction_for(sprite,'Create AI asset',function() sprite.layers[1].name=params.name end)
   return M.get_document_info({documentId=sprite_handle(sprite)})
 end
 function M.create_layer(params)
   local sprite=get_sprite(params.documentId);check_canvas(sprite);short_string(params.name,'name')
   local layer
-  app.transaction('Create AI layer',function() layer=sprite:newLayer();layer.name=params.name end)
+  transaction_for(sprite,'Create AI layer',function() layer=sprite:newLayer();layer.name=params.name end)
   local result=M.get_document_info(params)
   for _,item in ipairs(result.layers) do if layer_handles[item.layerId]==layer then return {documentId=params.documentId,layerId=item.layerId,name=layer.name} end end
   fail('COMMAND_FAILED','Created layer could not be inspected.')
+end
+local function group_parent(sprite, id)
+  if not id then return sprite end
+  local parent=get_layer(sprite,id)
+  if not parent.isGroup then fail('UNSUPPORTED_LAYER','The parent must be a group layer.') end
+  local current=parent
+  while current and current~=sprite do
+    if not current.isEditable then fail('LAYER_LOCKED','The parent group is locked.') end
+    current=current.parent
+  end
+  return parent
+end
+local function unique_child_name(parent, name)
+  for _,child in ipairs(parent.layers) do
+    if child.name==name then fail('LAYER_EXISTS','A layer with this name already exists in the target group.') end
+  end
+end
+function M.import_component(params)
+  local source=get_sprite(params.sourceDocumentId)
+  local destination=get_sprite(params.documentId)
+  if source==destination then fail('INVALID_ARGUMENT','Source and target must be different open documents.') end
+  check_canvas(source);check_canvas(destination)
+  short_string(params.groupName,'component group name')
+  local parent=group_parent(destination,params.parentGroupId)
+  unique_child_name(parent,params.groupName)
+  local dx=integer(params.x or 0,-256,256,'x offset')
+  local dy=integer(params.y or 0,-256,256,'y offset')
+  if type(params.allowOffCanvas)~='boolean' then fail('INVALID_ARGUMENT','allowOffCanvas must be boolean.') end
+  if params.timingPolicy~='require_match' and params.timingPolicy~='keep_target' then fail('INVALID_ARGUMENT','Choose require_match or keep_target timing.') end
+  if #source.layers==0 then fail('INVALID_ARGUMENT','Source has no layers to import.') end
+  local mapping,used_targets={},{}
+  local requested=params.frameMap
+  if requested==nil then
+    requested={}
+    for frame=1,#source.frames do requested[#requested+1]={sourceFrame=frame,targetFrame=frame} end
+  end
+  if type(requested)~='table' or #requested<1 or #requested>256 then fail('INVALID_ARGUMENT','Supply 1 to 256 frame mappings.') end
+  for _,pair in ipairs(requested) do
+    if type(pair)~='table' then fail('INVALID_ARGUMENT','Invalid frame mapping.') end
+    local from=integer(pair.sourceFrame,1,#source.frames,'source frame')
+    local to=integer(pair.targetFrame,1,#destination.frames,'target frame')
+    if used_targets[to] then fail('INVALID_ARGUMENT','Each target frame may be mapped only once.') end
+    used_targets[to]=true
+    local source_ms=math.floor(source.frames[from].duration*1000+0.5)
+    local target_ms=math.floor(destination.frames[to].duration*1000+0.5)
+    if #source.frames>1 and params.timingPolicy=='require_match' and source_ms~=target_ms then
+      fail('TIMING_MISMATCH','Animated component timing differs from the target. Align frame durations or explicitly keep target timing.')
+    end
+    mapping[#mapping+1]={sourceFrame=from,targetFrame=to,sourceDurationMs=source_ms,targetDurationMs=target_ms}
+  end
+  local nodes,cel_count,pixel_count={},0,0
+  local function collect(layers,parent_index)
+    for _,layer in ipairs(layers) do
+      if layer.isReference or layer.isTilemap or layer.isBackground then
+        fail('UNSUPPORTED_LAYER','Reference, tilemap, and background layers cannot be imported as editable components.')
+      end
+      local node={source=layer,parentIndex=parent_index,cels={}}
+      nodes[#nodes+1]=node
+      local index=#nodes
+      if layer.isGroup then collect(layer.layers,index)
+      else
+        for _,pair in ipairs(mapping) do
+          local cel=layer:cel(pair.sourceFrame)
+          if cel then
+            local image=cel.image:clone()
+            cel_count=cel_count+1;pixel_count=pixel_count+image.width*image.height
+            if cel_count>1024 or pixel_count>8000000 then fail('LIMIT_EXCEEDED','Component exceeds 1024 cels or 8 million cel pixels.') end
+            local x,y=cel.position.x+dx,cel.position.y+dy
+            if x < -512 or y < -512 or x+image.width > destination.width+512 or y+image.height > destination.height+512 then
+              fail('LIMIT_EXCEEDED','A copied cel exceeds safe position limits.')
+            end
+            if not params.allowOffCanvas and (x<0 or y<0 or x+image.width>destination.width or y+image.height>destination.height) then
+              fail('OUTSIDE_CANVAS','A copied cel would leave the target canvas. Set allowOffCanvas=true if intended.')
+            end
+            node.cels[#node.cels+1]={frame=pair.targetFrame,image=image,position=Point(x,y),opacity=cel.opacity,zIndex=cel.zIndex}
+          end
+        end
+      end
+    end
+  end
+  collect(source.layers,nil)
+  local root,created=nil,{}
+  transaction_for(destination,'Import AI component',function()
+    root=destination:newGroup();root.name=params.groupName
+    if parent~=destination then root.parent=parent end
+    for index,node in ipairs(nodes) do
+      local layer=node.source.isGroup and destination:newGroup() or destination:newLayer()
+      layer.name=node.source.name
+      layer.parent=node.parentIndex and created[node.parentIndex] or root
+      if node.source.opacity~=nil then layer.opacity=node.source.opacity end
+      if node.source.blendMode~=nil then layer.blendMode=node.source.blendMode end
+      layer.isVisible=node.source.isVisible
+      created[index]=layer
+      for _,copy in ipairs(node.cels) do
+        local cel=destination:newCel(layer,copy.frame,copy.image,copy.position)
+        if copy.opacity~=nil then cel.opacity=copy.opacity end
+        if copy.zIndex~=nil then cel.zIndex=copy.zIndex end
+      end
+    end
+    for index,node in ipairs(nodes) do created[index].isEditable=node.source.isEditable end
+  end)
+  app.refresh()
+  local info=M.get_document_info({documentId=params.documentId})
+  for _,item in ipairs(info.layers) do
+    if layer_handles[item.layerId]==root then
+      return {sourceDocumentId=params.sourceDocumentId,targetDocumentId=params.documentId,groupId=item.layerId,groupName=params.groupName,layerCount=#nodes,celCount=cel_count,frameMap=mapping,timingPolicy=params.timingPolicy,sourceTags=M.get_document_info({documentId=params.sourceDocumentId}).tags,sourceUnchanged=true,targetTimingUnchanged=true,independentCels=true}
+    end
+  end
+  fail('COMMAND_FAILED','Imported group could not be inspected.')
+end
+function M.create_group(params)
+  local sprite=get_sprite(params.documentId);check_canvas(sprite)
+  short_string(params.name,'group name')
+  local parent=group_parent(sprite,params.parentGroupId)
+  unique_child_name(parent,params.name)
+  local group
+  transaction_for(sprite,'Create AI group',function()
+    group=sprite:newGroup();group.name=params.name
+    if parent~=sprite then group.parent=parent end
+  end)
+  app.refresh()
+  local info=M.get_document_info(params)
+  for _,item in ipairs(info.layers) do
+    if layer_handles[item.layerId]==group then return {documentId=params.documentId,groupId=item.layerId,parentGroupId=params.parentGroupId,name=params.name} end
+  end
+  fail('COMMAND_FAILED','Created group could not be inspected.')
 end
 function M.read_pixels(params)
   local sprite,layer,frame=target(params)
@@ -175,7 +304,7 @@ function M.draw_pixels(params)
     for y=0,cel.image.height-1 do for x=0,cel.image.width-1 do copy:drawPixel(x+cel.position.x-left,y+cel.position.y-top,cel.image:getPixel(x,y)) end end
   end
   for _,p in ipairs(params.pixels) do copy:drawPixel(p.x-left,p.y-top,packed(p.rgba)) end
-  app.transaction(params.label,function()
+  transaction_for(sprite,params.label,function()
     if cel then cel.image=copy;cel.position=Point(left,top) else sprite:newCel(layer,frame,copy,Point(left,top)) end
   end)
   app.refresh()
@@ -189,6 +318,56 @@ function M.get_preview(params)
   for y=0,image.height-1 do for x=0,image.width-1 do local c=unpacked(image:getPixel(x,y));hex[#hex+1]=string.format('%02x%02x%02x%02x',c[1],c[2],c[3],c[4]) end end
   return {documentId=params.documentId,frame=frame,width=image.width,height=image.height,rgbaHex=table.concat(hex)}
 end
+local function frame_pair(params)
+  local sprite=get_sprite(params.documentId);check_canvas(sprite)
+  local previous=integer(params.previousFrame,1,#sprite.frames,'previous frame')
+  local current=integer(params.currentFrame,1,#sprite.frames,'current frame')
+  if previous==current then fail('INVALID_ARGUMENT','Choose two different frames.') end
+  local before=Image(sprite.width,sprite.height,ColorMode.RGB)
+  local after=Image(sprite.width,sprite.height,ColorMode.RGB)
+  before:drawSprite(sprite,previous);after:drawSprite(sprite,current)
+  return sprite,previous,current,before,after
+end
+local function frame_pair_result(sprite,previous,current,hex)
+  return {width=sprite.width,height=sprite.height,previousFrame=previous,currentFrame=current,
+    previousDurationMs=math.floor(sprite.frames[previous].duration*1000+0.5),
+    currentDurationMs=math.floor(sprite.frames[current].duration*1000+0.5),rgbaHex=table.concat(hex)}
+end
+function M.compare_frames(params)
+  local sprite,previous,current,before,after=frame_pair(params)
+  local hex,changed,left,top,right,bottom={},0,nil,nil,nil,nil
+  for y=0,sprite.height-1 do for x=0,sprite.width-1 do
+    local old,new=before:getPixel(x,y),after:getPixel(x,y)
+    local rgba={0,0,0,0}
+    if old~=new then
+      changed=changed+1
+      left=left and math.min(left,x) or x;top=top and math.min(top,y) or y
+      right=right and math.max(right,x) or x;bottom=bottom and math.max(bottom,y) or y
+      local old_alpha,new_alpha=app.pixelColor.rgbaA(old),app.pixelColor.rgbaA(new)
+      if old_alpha==0 then rgba={54,215,240,255}
+      elseif new_alpha==0 then rgba={238,83,151,255}
+      else rgba={250,204,76,255} end
+    end
+    hex[#hex+1]=string.format('%02x%02x%02x%02x',rgba[1],rgba[2],rgba[3],rgba[4])
+  end end
+  local result=frame_pair_result(sprite,previous,current,hex)
+  result.changedPixels=changed
+  if changed>0 then result.changedBounds={x=left,y=top,width=right-left+1,height=bottom-top+1} end
+  return result
+end
+function M.render_onion_skin(params)
+  local sprite,previous,current,before,after=frame_pair(params)
+  local hex={}
+  for y=0,sprite.height-1 do for x=0,sprite.width-1 do
+    local old,new=before:getPixel(x,y),after:getPixel(x,y)
+    local rgba
+    if app.pixelColor.rgbaA(new)>0 then rgba=unpacked(new)
+    elseif app.pixelColor.rgbaA(old)>0 then rgba={238,83,151,math.max(80,math.floor(app.pixelColor.rgbaA(old)*0.55))}
+    else rgba={0,0,0,0} end
+    hex[#hex+1]=string.format('%02x%02x%02x%02x',rgba[1],rgba[2],rgba[3],rgba[4])
+  end end
+  return frame_pair_result(sprite,previous,current,hex)
+end
 function M.undo(params)
   local sprite=get_sprite(params.documentId)
   with_active(sprite,function() app.undo() end);app.refresh();return M.get_document_info(params)
@@ -201,7 +380,7 @@ function M.add_frame(params)
   local sprite=get_sprite(params.documentId);check_canvas(sprite)
   if #sprite.frames>=256 then fail('LIMIT_EXCEEDED','At most 256 frames are supported.') end
   integer(params.durationMs,1,60000,'duration')
-  app.transaction('Add AI frame',function() local frame=sprite:newEmptyFrame(#sprite.frames+1);frame.duration=params.durationMs/1000 end)
+  transaction_for(sprite,'Add AI frame',function() local frame=sprite:newEmptyFrame(#sprite.frames+1);frame.duration=params.durationMs/1000 end)
   return M.get_document_info(params)
 end
 function M.duplicate_frame(params)
@@ -216,7 +395,7 @@ function M.duplicate_frame(params)
     end
   end
   local duration=sprite.frames[source].duration
-  app.transaction('Duplicate AI frame',function()
+  transaction_for(sprite,'Duplicate AI frame',function()
     local frame=sprite:newEmptyFrame(#sprite.frames+1)
     frame.duration=duration
     for _,copy in ipairs(copies) do
@@ -240,7 +419,7 @@ function M.copy_cel(params)
   local copy=cel.image:clone()
   local position=Point(cel.position.x,cel.position.y)
   local opacity,zIndex=cel.opacity,cel.zIndex
-  app.transaction('Copy AI cel',function()
+  transaction_for(sprite,'Copy AI cel',function()
     local created=sprite:newCel(layer,destination,copy,position)
     if opacity~=nil then created.opacity=opacity end
     if zIndex~=nil then created.zIndex=zIndex end
@@ -261,7 +440,7 @@ function M.move_cel(params)
   if not params.allowOffCanvas and (x<0 or y<0 or x+cel.image.width>sprite.width or y+cel.image.height>sprite.height) then
     fail('OUTSIDE_CANVAS','Moving this cel would put part of it outside the canvas. Set allowOffCanvas=true explicitly if intended.')
   end
-  app.transaction('Move AI cel',function() cel.position=Point(x,y) end)
+  transaction_for(sprite,'Move AI cel',function() cel.position=Point(x,y) end)
   app.refresh()
   return {documentId=params.documentId,layerId=params.layerId,frame=frame,x=x,y=y,width=cel.image.width,height=cel.image.height}
 end
@@ -269,7 +448,7 @@ function M.set_frame_duration(params)
   local sprite=get_sprite(params.documentId);check_canvas(sprite)
   local frame=integer(params.frame,1,#sprite.frames,'frame')
   integer(params.durationMs,1,60000,'duration')
-  app.transaction('Set AI frame duration',function() sprite.frames[frame].duration=params.durationMs/1000 end)
+  transaction_for(sprite,'Set AI frame duration',function() sprite.frames[frame].duration=params.durationMs/1000 end)
   return M.get_document_info(params)
 end
 function M.create_animation_tag(params)
@@ -282,7 +461,7 @@ function M.create_animation_tag(params)
   local directions={forward=AniDir.FORWARD,reverse=AniDir.REVERSE,ping_pong=AniDir.PING_PONG,ping_pong_reverse=AniDir.PING_PONG_REVERSE}
   if type(params.direction)~='string' or not directions[params.direction] then fail('INVALID_ARGUMENT','Unsupported animation direction.') end
   for _,tag in ipairs(sprite.tags) do if tag.name==params.name then fail('TAG_EXISTS','A tag with this name already exists; choose a new name.') end end
-  app.transaction('Create AI animation tag',function()
+  transaction_for(sprite,'Create AI animation tag',function()
     local tag=sprite:newTag(first,last)
     tag.name=params.name;tag.aniDir=directions[params.direction];tag.repeats=params.repeats
   end)
@@ -293,7 +472,7 @@ function M.set_layer_properties(params)
   if params.visible==nil and params.opacity==nil then fail('INVALID_ARGUMENT','Specify visibility or opacity.') end
   if params.visible~=nil and type(params.visible)~='boolean' then fail('INVALID_ARGUMENT','Visibility must be boolean.') end
   if params.opacity~=nil then integer(params.opacity,0,255,'opacity') end
-  app.transaction('Change AI layer',function() if params.visible~=nil then layer.isVisible=params.visible end;if params.opacity~=nil then layer.opacity=params.opacity end end)
+  transaction_for(sprite,'Change AI layer',function() if params.visible~=nil then layer.isVisible=params.visible end;if params.opacity~=nil then layer.opacity=params.opacity end end)
   return M.get_document_info(params)
 end
 function M.save_copy(params)
@@ -309,11 +488,11 @@ function M.open_document(params)
 end
 local art_capabilities={}
 function M.attach_art(factory)
-  local art=factory{get_sprite=get_sprite,get_layer=get_layer,check_canvas=check_canvas,editable=editable,fail=fail}
+  local art=factory{get_sprite=get_sprite,get_layer=get_layer,check_canvas=check_canvas,editable=editable,fail=fail,transaction_for=transaction_for}
   for _,method in ipairs(art.capabilities()) do M[method]=art[method];art_capabilities[#art_capabilities+1]=method end
 end
 function M.capabilities()
-  local result={'list_documents','get_document_info','create_sprite','create_layer','read_pixels','draw_pixels','get_preview','undo','redo','add_frame','duplicate_frame','copy_cel','move_cel','set_frame_duration','create_animation_tag','set_layer_properties','save_copy'}
+  local result={'list_documents','get_document_info','create_sprite','create_layer','create_group','import_component','read_pixels','draw_pixels','get_preview','compare_frames','render_onion_skin','undo','redo','add_frame','duplicate_frame','copy_cel','move_cel','set_frame_duration','create_animation_tag','set_layer_properties','save_copy'}
   for _,method in ipairs(art_capabilities) do result[#result+1]=method end
   return result
 end

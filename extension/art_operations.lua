@@ -3,7 +3,7 @@
 local function create(deps)
   local M = {}
   local get_sprite, get_layer = deps.get_sprite, deps.get_layer
-  local check_canvas, editable, fail = deps.check_canvas, deps.editable, deps.fail
+  local check_canvas, editable, fail, transaction_for = deps.check_canvas, deps.editable, deps.fail, deps.transaction_for
 
   local function integer(value, low, high, name)
     if type(value) ~= 'number' or value % 1 ~= 0 or value < low or value > high then
@@ -127,7 +127,7 @@ local function create(deps)
         fail('INVALID_ARGUMENT', 'A newly added palette entry must not have an expected color.')
       end
     end
-    app.transaction('Edit AI palette', function()
+    transaction_for(sprite, 'Edit AI palette', function()
       if size > #palette then palette:resize(size) end
       for _, item in ipairs(params.colors) do
         local c = item.rgba
@@ -172,7 +172,7 @@ local function create(deps)
     elseif params.rectangle ~= nil then
       fail('INVALID_ARGUMENT', 'Clear mode must not include a rectangle.')
     end
-    app.transaction('Change AI selection', function()
+    transaction_for(sprite, 'Change AI selection', function()
       sprite.selection = rectangle and Selection(rectangle) or Selection()
     end)
     app.refresh()
@@ -261,7 +261,7 @@ local function create(deps)
       end
     end
     local preserved = Selection(); preserved:add(sprite.selection)
-    app.transaction('Transform AI selection', function()
+    transaction_for(sprite, 'Transform AI selection', function()
       cel.image = copy
       cel.position = Point(left, top)
       if selection_state(sprite).selectionKey ~= state.selectionKey then sprite.selection = preserved end

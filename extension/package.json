@@ -2,7 +2,7 @@
   "name": "aseprite-mcp",
   "displayName": "Aseprite MCP",
   "description": "Explicit local connection for AI pixel-art tools.",
-  "version": "0.1.5",
+  "version": "0.1.7",
   "publisher": "aseprite-mcp",
   "categories": ["Scripts"],
   "contributes": { "scripts": [{ "path": "./main.lua" }] }

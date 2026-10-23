@@ -17,6 +17,9 @@ test('SDK tool replies contain an actual PNG image, matching metadata, and exclu
     call:async(method:string,params:Record<string,unknown>,mutating?:boolean)=>{
       calls.push({method,params,mutating});
       if(method==='get_preview')return {documentId:params.documentId,frame:params.frame,width:2,height:1,rgbaHex};
+      if(method==='compare_frames'||method==='render_onion_skin')return {width:2,height:1,previousFrame:params.previousFrame,currentFrame:params.currentFrame,previousDurationMs:100,currentDurationMs:200,rgbaHex,changedPixels:1,changedBounds:{x:0,y:0,width:1,height:1}};
+      if(method==='create_group')return {documentId:params.documentId,groupId:'group-1',name:params.name};
+      if(method==='import_component')return {sourceDocumentId:params.sourceDocumentId,targetDocumentId:params.documentId,groupId:'group-2',independentCels:true};
       if(method==='get_document_info')return {documentId:params.documentId,width:2,height:1,frames:[{frame:1,durationMs:100},{frame:2,durationMs:200}],tags:[{name:'run',fromFrame:1,toFrame:2,direction:'ping_pong',repeats:0}]};
       if(method==='save_copy') {
         const bytes=Buffer.alloc(128);bytes.writeUInt32LE(128,0);bytes.writeUInt16LE(0xa5e0,4);
@@ -43,6 +46,18 @@ test('SDK tool replies contain an actual PNG image, matching metadata, and exclu
     const sheetBytes=Buffer.from(sheet.data!,'base64');
     expect(sheet.mimeType).toBe('image/png');expect(sheetBytes.readUInt32BE(16)).toBe(10);expect(sheetBytes.readUInt32BE(20)).toBe(5);
     expect(calls.filter(item=>item.method==='get_preview').slice(1).map(item=>item.params.frame)).toEqual([1,2]);
+    const diff=await client.callTool({name:'compare_frames',arguments:{documentId:'sprite-1',previousFrame:1,currentFrame:2,scale:2}});
+    expect(diff.structuredContent).toMatchObject({ok:true,result:{changedPixels:1,changedBounds:{x:0,y:0,width:1,height:1},width:4,height:2,readOnly:true}});
+    const diffImage=(diff.content as {type:string;data?:string}[]).find(item=>item.type==='image')!;
+    expect(Buffer.from(diffImage.data!,'base64').equals(encodePng(2,1,rgbaHex,2))).toBe(true);
+    const onion=await client.callTool({name:'render_onion_skin',arguments:{documentId:'sprite-1',previousFrame:1,currentFrame:2}});
+    expect(onion.structuredContent).toMatchObject({ok:true,result:{readOnly:true,previousFrame:1,currentFrame:2}});
+    expect(calls.filter(item=>item.method==='compare_frames'||item.method==='render_onion_skin').every(item=>item.mutating===false)).toBe(true);
+    const group=await client.callTool({name:'create_group',arguments:{documentId:'sprite-1',name:'Actors'}});
+    expect(group.structuredContent).toMatchObject({ok:true,result:{groupId:'group-1'}});
+    const component=await client.callTool({name:'import_component',arguments:{documentId:'sprite-1',sourceDocumentId:'sprite-2',groupName:'Hero'}});
+    expect(component.structuredContent).toMatchObject({ok:true,result:{groupId:'group-2',independentCels:true}});
+    expect(calls.filter(item=>item.method==='create_group'||item.method==='import_component').every(item=>item.mutating===true)).toBe(true);
     const exported=await client.callTool({name:'export_sprite',arguments:{documentId:'sprite-1',filename:'with space 雨.png'}});
     expect(exported.isError).not.toBe(true);
     expect(Buffer.from(await Bun.file(join(root,'with space 雨.png')).arrayBuffer()).equals(encodePng(2,1,rgbaHex))).toBe(true);

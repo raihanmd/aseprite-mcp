@@ -37,6 +37,16 @@ test('animation controls validate frame timing, bounded preview ranges and clip 
   expect(schemas.get_animation_preview.safeParse({documentId:'sprite',frameCount:17}).success).toBe(false);
 });
 
+test('editable assembly and frame diagnostics require bounded explicit targets',()=>{
+  expect(schemas.create_group.parse({documentId:'master',name:'Actor',parentGroupId:'actors'})).toMatchObject({documentId:'master',name:'Actor',parentGroupId:'actors'});
+  const component=schemas.import_component.parse({documentId:'master',sourceDocumentId:'source',groupName:'Actor',frameMap:[{sourceFrame:1,targetFrame:2}]});
+  expect(component).toMatchObject({x:0,y:0,allowOffCanvas:false,timingPolicy:'require_match'});
+  expect(schemas.import_component.safeParse({...component,frameMap:[{sourceFrame:0,targetFrame:2}]}).success).toBe(false);
+  expect(schemas.import_component.safeParse({...component,timingPolicy:'overwrite_target'}).success).toBe(false);
+  expect(schemas.compare_frames.safeParse({documentId:'master',previousFrame:1,currentFrame:2,scale:8}).success).toBe(true);
+  expect(schemas.render_onion_skin.safeParse({documentId:'master',previousFrame:1,currentFrame:257}).success).toBe(false);
+});
+
 test('file creation and nested file revisions retain byte and length validation',()=>{
   const create=(rgba:unknown)=>({filename:'new.aseprite',width:8,height:8,pixels:[{x:0,y:0,rgba}]});
   const edit=(rgba:unknown)=>({inputFilename:'original.aseprite',expectedFileSha256:'a'.repeat(64),filename:'revision.aseprite',operations:[{method:'draw_pixels',layerIndex:1,pixels:[{x:0,y:0,rgba}]}]});

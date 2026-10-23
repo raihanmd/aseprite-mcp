@@ -22,10 +22,14 @@ export const schemas = {
   get_document_info:z.object(target).strict(),
   create_sprite:z.object({width:z.number().int().min(1).max(256),height:z.number().int().min(1).max(256),name:z.string().min(1).max(100).default('AI Asset')}).strict(),
   create_layer:z.object({...target,name:z.string().min(1).max(100)}).strict(),
+  create_group:z.object({...target,name:z.string().min(1).max(100),parentGroupId:handle.optional()}).strict(),
+  import_component:z.object({...target,sourceDocumentId:handle,groupName:z.string().min(1).max(100),parentGroupId:handle.optional(),x:z.number().int().min(-256).max(256).default(0),y:z.number().int().min(-256).max(256).default(0),allowOffCanvas:z.boolean().default(false),timingPolicy:z.enum(['require_match','keep_target']).default('require_match'),frameMap:z.array(z.object({sourceFrame:z.number().int().min(1).max(256),targetFrame:z.number().int().min(1).max(256)}).strict()).min(1).max(256).optional()}).strict(),
   read_pixels:z.object({...cell,...rectangle}).strict(),
   draw_pixels:z.object({...cell,pixels:z.array(pixel).min(1).max(16384),allowedMask:z.array(point).min(1).max(16384).optional(),allowedColors:z.array(color).min(1).max(256).optional(),label:z.string().min(1).max(100).default('AI pixel edit')}).strict(),
   draw_shapes:z.object({...cell,shapes:z.array(shape).min(1).max(128),allowedMask:z.array(point).min(1).max(16384).optional(),allowedColors:z.array(color).min(1).max(256).optional(),label:z.string().min(1).max(100).default('AI shape draft')}).strict(),
   get_preview:z.object({...target,frame:z.number().int().min(1).max(256).default(1),scale:z.number().int().min(1).max(8).default(1)}).strict(),
+  compare_frames:z.object({...target,previousFrame:z.number().int().min(1).max(256),currentFrame:z.number().int().min(1).max(256),scale:z.number().int().min(1).max(8).default(1)}).strict(),
+  render_onion_skin:z.object({...target,previousFrame:z.number().int().min(1).max(256),currentFrame:z.number().int().min(1).max(256),scale:z.number().int().min(1).max(8).default(1)}).strict(),
   undo:z.object(target).strict(), redo:z.object(target).strict(),
   add_frame:z.object({...target,durationMs:z.number().int().min(1).max(60000).default(100)}).strict(),
   duplicate_frame:z.object({...target,sourceFrame:z.number().int().min(1).max(256)}).strict(),
@@ -38,4 +42,4 @@ export const schemas = {
   ...artSchemas,
 };
 export type EditorMethod = keyof typeof schemas;
-export const mutating = new Set<string>(['create_sprite','create_layer','draw_pixels','draw_shapes','undo','redo','add_frame','duplicate_frame','copy_cel','move_cel','set_frame_duration','create_animation_tag','set_layer_properties','set_palette_colors','set_selection','transform_selection','save_copy']);
+export const mutating = new Set<string>(['create_sprite','create_layer','create_group','import_component','draw_pixels','draw_shapes','undo','redo','add_frame','duplicate_frame','copy_cel','move_cel','set_frame_duration','create_animation_tag','set_layer_properties','set_palette_colors','set_selection','transform_selection','save_copy']);

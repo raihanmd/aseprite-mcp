@@ -2,6 +2,12 @@
 
 Authored drawing guidance, distilled from primary artist lessons checked on 2026-10-09. The construction and correction exercises below are our practical application, not a mandatory anatomy standard or a copied tutorial. They work without access to the linked pages. Stylized, realistic, tiny, and deliberately rigid characters need different treatment.
 
+## Explore the focal silhouette
+
+For important unfamiliar person or creature, record intended occupied pixel footprint and explore several materially different flat silhouettes before committing. Roughly three candidates are often enough to expose weak first idea without turning exploration into quota. Change structural choices—body rhythm, head-to-body ratio, stance, support, near/far limb separation, appendage mass, and negative spaces—not merely colors or accessories.
+
+Select silhouette that best communicates identity and gesture at native delivery size. Then establish head, chest, pelvis, near and far limbs, support/contact, and any defining appendage before clothing or texture. Tiny stylized design may merge masses, but viewer should not have to guess whether merged shape is torso, pelvis, or hind limb.
+
 ## Establish a person before a costume
 
 A sprite's rectangle is not the person's proportions. Decide the occupied height, head-to-body relationship, and view. A big head can improve expression in a tiny character; a smaller head can suit a taller, more realistic design. Do not impose an eight-head or six-head rule on every sprite.

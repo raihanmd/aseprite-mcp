@@ -18,12 +18,12 @@ transport.stderr.on('data', chunk => { diagnostics += String(chunk); });
 try {
   await client.connect(transport);
   const { tools } = await client.listTools();
-  assert.equal(tools.length, 31);
+  assert.equal(tools.length, 35);
   assert(tools.some(tool => tool.name === 'draw_pixels'));
   assert(tools.some(tool => tool.name === 'get_animation_preview'));
   assert(tools.some(tool => tool.name === 'set_frame_duration'));
   assert(tools.some(tool => tool.name === 'create_animation_tag'));
-  for(const name of ['duplicate_frame','copy_cel','move_cel','export_sprite_sheet','get_palette','set_palette_colors','get_selection','set_selection','transform_selection'])
+  for(const name of ['duplicate_frame','copy_cel','move_cel','create_group','import_component','compare_frames','render_onion_skin','export_sprite_sheet','get_palette','set_palette_colors','get_selection','set_selection','transform_selection'])
     assert(tools.some(tool=>tool.name===name),`Missing ${name}`);
   assert(!tools.some(tool => tool.name === 'execute_lua'));
   assert(tools.some(tool=>tool.name==='batch_edit_sprite'));

@@ -13,7 +13,7 @@ let diagnostics='';transport.stderr.on('data',chunk=>{diagnostics=(diagnostics+S
 const client=new Client({name:'production-batch-startup-test',version:'1'});
 try{
   await client.connect(transport);
-  const {tools}=await client.listTools();assert.equal(tools.length,31);
+  const {tools}=await client.listTools();assert.equal(tools.length,35);
   const status=await client.callTool({name:'batch_status',arguments:{}});
   assert.equal(status.structuredContent.result.configured,false);assert.equal(status.structuredContent.result.workflowVerified,false);
   const live=await client.callTool({name:'list_documents',arguments:{}});assert.equal(live.isError,true);assert.equal(live.structuredContent.error.code,'LIVE_DISABLED');
